@@ -13,6 +13,9 @@ contract PublicMessages {
 
   mapping(address => string) public handles;
 
+  event SendingMessage(address _from);
+  event MessageSaved(address _from, string _msg);
+
   constructor(uint256 _handlePrice) {
     owner = msg.sender;
     handlePrice = _handlePrice;
@@ -52,7 +55,9 @@ contract PublicMessages {
   }
 
   function sendMessage(string memory _message) public requireHandle {
+    emit SendingMessage(msg.sender);
     chat.push(Message({ sender: msg.sender, message: _message }));
+    emit MessageSaved(msg.sender, _message);
   }
 
   function getMessages(uint256 _page, uint256 _count) public view requireHandle returns (Message[] memory) {
