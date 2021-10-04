@@ -1,5 +1,5 @@
-const Migrations = artifacts.require('PublicMessages');
+const PublicMessages = artifacts.require('PublicMessages');
 
 module.exports = function (deployer) {
-  deployer.deploy(PublicMessages);
+  deployer.deploy(PublicMessages, '1000000000000000');
 };
