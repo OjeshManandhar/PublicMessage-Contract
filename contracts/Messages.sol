@@ -1,23 +1,44 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.4.22 <0.9.0;
 
-contract Messages {
+contract PublicMessages {
   struct Message {
     address sender;
     string message;
   }
 
+  uint256 handlePrice;
+  address private owner;
+  Message[] private chat;
+
   mapping(address => string) public handles;
 
-  Message[] private chat;
+  constructor(uint256 _handlePrice) {
+    owner = msg.sender;
+    handlePrice = _handlePrice;
+    handles[msg.sender] = 'owner';
+  }
+
+  modifier onlyOwner() {
+    require(msg.sender == owner, 'Only the owner of the contract has access');
+    _;
+  }
 
   modifier requireHandle() {
     require(bytes(handles[msg.sender]).length >= 2, 'Please create a handle first');
     _;
   }
 
+  function setHandlePrice(uint256 _handlePrice) external onlyOwner {
+    handlePrice = _handlePrice;
+  }
+
+  function getHandlePrice() public view returns (uint256) {
+    return handlePrice;
+  }
+
   function setHandle(string memory _handle) public payable {
-    require(msg.value == 0.001 ether, 'Please pay 0.001 ether to setup a handle');
+    require(msg.value == handlePrice, 'Please pay the required handle price to setup a handle');
 
     require(bytes(_handle).length >= 2 && bytes(_handle).length <= 10, 'Please give a handle with 2 to 10 characters');
 
