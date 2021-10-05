@@ -62,6 +62,11 @@ contract PublicMessages {
 
   function getMessages(uint256 _page, uint256 _count) public view requireHandle returns (Message[] memory) {
     uint256 len = chat.length;
+
+    if (len == 0) {
+      return new Message[](0);
+    }
+
     uint256 maxPages = len / _count;
 
     uint256 end;
