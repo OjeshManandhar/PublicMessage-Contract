@@ -1,0 +1,25 @@
+{
+  "name": "public-message_contract",
+  "version": "1.0.0",
+  "description": "Smart Contract for a simple messaging DApp",
+  "main": "truffle-config.js",
+  "directories": {
+    "compile": "truffle compile",
+    "test": "truffle test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Ojesh Manandhar",
+  "license": "ISC",
+  "keywords": [
+    "blockchain",
+    "solidity",
+    "mocha",
+    "chai"
+  ],
+  "dependencies": {
+    "chai": "^4.3.4",
+    "mocha": "^9.1.2"
+  }
+}
