@@ -1,9 +1,9 @@
-const { expect } = require('chai');
+const { expect, AssertionError } = require('chai');
 
 const PublicMessages = artifacts.require('PublicMessages');
 
 contract('PublicMessages', accounts => {
-  const [alice, bob] = accounts;
+  const [alice, bob, chrish] = accounts;
   const handlePrice = '1000000000000000';
   let pubMsg;
 
@@ -26,10 +26,10 @@ contract('PublicMessages', accounts => {
   });
 
   describe('handle', () => {
-    describe('handle price', () => {
+    describe('price', () => {
       const newHandlePrice = (parseInt(handlePrice, 10) * 2).toString();
 
-      it('should  allow owner to change handle price', async () => {
+      it('should allow only owner to change handle price', async () => {
         const result = await pubMsg.setHandlePrice(newHandlePrice, { from: alice });
 
         expect(result.receipt.status).to.be.true;
@@ -41,14 +41,16 @@ contract('PublicMessages', accounts => {
 
           expect(result).to.be.undefined;
         } catch (err) {
+          if (err instanceof AssertionError) throw err;
+
           expect(err).to.be.an('error');
           expect(err.reason).to.equal('Only the owner of the contract has access');
         }
       });
     });
 
-    describe('handle pay', () => {
-      it('should only set new handle only when value sent is equal to handle price', async () => {
+    describe('pay', () => {
+      it('should set new handle only when value sent is equal to handle price', async () => {
         const result = await pubMsg.setHandle('bob', { from: bob, value: handlePrice });
 
         expect(result.receipt.status).to.be.true;
@@ -60,13 +62,15 @@ contract('PublicMessages', accounts => {
 
           expect(result).to.be.undefined;
         } catch (err) {
+          if (err instanceof AssertionError) throw err;
+
           expect(err).to.be.an('error');
           expect(err.reason).to.equal('Please pay the required handle price to setup a handle');
         }
       });
     });
 
-    describe('handle value', () => {
+    describe('value', () => {
       it('should return the handle of existing user', async () => {
         const handle = (await pubMsg.getHandle({ from: alice })).toString();
 
@@ -85,6 +89,8 @@ contract('PublicMessages', accounts => {
 
           expect(result.receipt.status).to.be.true;
         } catch (err) {
+          if (err instanceof AssertionError) throw err;
+
           expect(err).to.be.an('error');
           expect(err.reason).to.equal('Please give a handle with 2 to 10 characters');
         }
@@ -96,12 +102,87 @@ contract('PublicMessages', accounts => {
 
           expect(result.receipt.status).to.be.true;
         } catch (err) {
+          if (err instanceof AssertionError) throw err;
+
           expect(err).to.be.an('error');
           expect(err.reason).to.equal('Please give a handle with 2 to 10 characters');
         }
       });
     });
+  });
 
-    describe('message', () => {});
+  describe('message', () => {
+    describe('send', () => {
+      it('should allow people with handle to send messages', async () => {
+        const result = await pubMsg.sendMessage('hi', { from: alice });
+
+        expect(result.receipt.status).to.be.true;
+      });
+
+      it("should emit 'SendingMessage' and 'MessageSaved' when user sends a message", async () => {
+        const result = await pubMsg.sendMessage('hi', { from: alice });
+
+        expect(result.logs[0]).to.have.property('event', 'SendingMessage');
+        expect(result.logs[0]).to.have.property('args').that.has.property('__length__', 1);
+
+        expect(result.logs[1]).to.have.property('event', 'MessageSaved');
+        expect(result.logs[1]).to.have.property('args').that.has.property('__length__', 2);
+      });
+
+      it('should not allow people without handle to send message', async () => {
+        try {
+          const result = await pubMsg.sendMessage('hi', { from: bob });
+
+          expect(result).to.be.undefined;
+        } catch (err) {
+          if (err instanceof AssertionError) throw err;
+
+          expect(err).to.be.an('error');
+          expect(err.reason).to.equal('Please create a handle first');
+        }
+      });
+    });
+
+    describe('get', () => {
+      beforeEach(async () => {
+        await pubMsg.setHandle('alice', { from: alice, value: handlePrice });
+        await pubMsg.setHandle('bob', { from: bob, value: handlePrice });
+
+        await pubMsg.sendMessage('hi', { from: alice });
+        await pubMsg.sendMessage('hello', { from: bob });
+        await pubMsg.sendMessage('whatsup', { from: alice });
+        await pubMsg.sendMessage('whatsssuuuppp', { from: bob });
+        await pubMsg.sendMessage('nothing much', { from: alice });
+      });
+
+      it('should allow people with handle to get messages', async () => {
+        const chat = await pubMsg.getMessages(1, 3, { from: alice });
+
+        expect(chat).to.be.an('array');
+      });
+
+      it('should return messages with proper pagination', async () => {
+        const chat = await pubMsg.getMessages(2, 3, { from: bob });
+
+        expect(chat).to.deep.equal([
+          [alice, 'hi'],
+          [bob, 'hello']
+        ]);
+      });
+
+      it('should not allow people without handle to get message', async () => {
+        try {
+          const result = await pubMsg.getMessages(1, 3, { from: chrish });
+
+          expect(result).to.be.undefined;
+        } catch (err) {
+          if (err instanceof AssertionError) throw err;
+
+          expect(err).to.be.an('error');
+          // The structure of error is not like this
+          // expect(err.reason).to.equal('Please create a handle first');
+        }
+      });
+    });
   });
 });
