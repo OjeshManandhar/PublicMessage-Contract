@@ -15,10 +15,10 @@
   "keywords": [
     "blockchain",
     "solidity",
-    "mocha",
     "chai"
   ],
-  "dependencies": {
+  "dependencies": {},
+  "devDependencies": {
     "chai": "^4.3.4"
   }
 }
