@@ -75,6 +75,11 @@ contract PublicMessages {
 
     if (_page > maxPages) {
       size = len % _count;
+
+      if (size == 0) {
+        return new Message[](0);
+      }
+
       start = 0;
       end = len - maxPages * _count - 1;
     } else {
